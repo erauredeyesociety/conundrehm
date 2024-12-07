@@ -4,6 +4,10 @@
 //Last Updated: 7/29/2022
 //Version: Beta 1.3
 
+#include <Arduino.h>
+#include "radioComm.h"
+#include "config.h"
+
 //========================================================================================================================//
 
 //This file contains all necessary functions and code used for radio communication to avoid cluttering the main code
@@ -12,6 +16,112 @@ unsigned long rising_edge_start_1, rising_edge_start_2, rising_edge_start_3, ris
 unsigned long channel_1_raw, channel_2_raw, channel_3_raw, channel_4_raw, channel_5_raw, channel_6_raw;
 int ppm_counter = 0;
 unsigned long time_ms = 0;
+
+
+
+//========================================================================================================================//
+
+void getCh1() {
+  int trigger = digitalRead(ch1Pin);
+  if(trigger == 1) {
+    rising_edge_start_1 = micros();
+  }
+  else if(trigger == 0) {
+    channel_1_raw = micros() - rising_edge_start_1;
+  }
+}
+
+void getCh2() {
+  int trigger = digitalRead(ch2Pin);
+  if(trigger == 1) {
+    rising_edge_start_2 = micros();
+  }
+  else if(trigger == 0) {
+    channel_2_raw = micros() - rising_edge_start_2;
+  }
+}
+
+void getCh3() {
+  int trigger = digitalRead(ch3Pin);
+  if(trigger == 1) {
+    rising_edge_start_3 = micros();
+  }
+  else if(trigger == 0) {
+    channel_3_raw = micros() - rising_edge_start_3;
+  }
+}
+
+void getCh4() {
+  int trigger = digitalRead(ch4Pin);
+  if(trigger == 1) {
+    rising_edge_start_4 = micros();
+  }
+  else if(trigger == 0) {
+    channel_4_raw = micros() - rising_edge_start_4;
+  }
+}
+
+void getCh5() {
+  int trigger = digitalRead(ch5Pin);
+  if(trigger == 1) {
+    rising_edge_start_5 = micros();
+  }
+  else if(trigger == 0) {
+    channel_5_raw = micros() - rising_edge_start_5;
+  }
+}
+
+void getCh6() {
+  int trigger = digitalRead(ch6Pin);
+  if(trigger == 1) {
+    rising_edge_start_6 = micros();
+  }
+  else if(trigger == 0) {
+    channel_6_raw = micros() - rising_edge_start_6;
+  }
+}
+
+//INTERRUPT SERVICE ROUTINES (for reading PWM and PPM)
+
+void getPPM() {
+  unsigned long dt_ppm;
+  int trig = digitalRead(PPM_Pin);
+  if (trig==1) { //Only care about rising edge
+    dt_ppm = micros() - time_ms;
+    time_ms = micros();
+
+    
+    if (dt_ppm > 5000) { //Waiting for long pulse to indicate a new pulse train has arrived
+      ppm_counter = 0;
+    }
+  
+    if (ppm_counter == 1) { //First pulse
+      channel_1_raw = dt_ppm;
+    }
+  
+    if (ppm_counter == 2) { //Second pulse
+      channel_2_raw = dt_ppm;
+    }
+  
+    if (ppm_counter == 3) { //Third pulse
+      channel_3_raw = dt_ppm;
+    }
+  
+    if (ppm_counter == 4) { //Fourth pulse
+      channel_4_raw = dt_ppm;
+    }
+  
+    if (ppm_counter == 5) { //Fifth pulse
+      channel_5_raw = dt_ppm;
+    }
+  
+    if (ppm_counter == 6) { //Sixth pulse
+      channel_6_raw = dt_ppm;
+    }
+    
+    ppm_counter = ppm_counter + 1;
+  }
+}
 
 void radioSetup() {
   //PPM Receiver 
@@ -89,110 +199,3 @@ void serialEvent3(void)
   #endif
 }
 
-
-
-//========================================================================================================================//
-
-
-
-//INTERRUPT SERVICE ROUTINES (for reading PWM and PPM)
-
-void getPPM() {
-  unsigned long dt_ppm;
-  int trig = digitalRead(PPM_Pin);
-  if (trig==1) { //Only care about rising edge
-    dt_ppm = micros() - time_ms;
-    time_ms = micros();
-
-    
-    if (dt_ppm > 5000) { //Waiting for long pulse to indicate a new pulse train has arrived
-      ppm_counter = 0;
-    }
-  
-    if (ppm_counter == 1) { //First pulse
-      channel_1_raw = dt_ppm;
-    }
-  
-    if (ppm_counter == 2) { //Second pulse
-      channel_2_raw = dt_ppm;
-    }
-  
-    if (ppm_counter == 3) { //Third pulse
-      channel_3_raw = dt_ppm;
-    }
-  
-    if (ppm_counter == 4) { //Fourth pulse
-      channel_4_raw = dt_ppm;
-    }
-  
-    if (ppm_counter == 5) { //Fifth pulse
-      channel_5_raw = dt_ppm;
-    }
-  
-    if (ppm_counter == 6) { //Sixth pulse
-      channel_6_raw = dt_ppm;
-    }
-    
-    ppm_counter = ppm_counter + 1;
-  }
-}
-
-void getCh1() {
-  int trigger = digitalRead(ch1Pin);
-  if(trigger == 1) {
-    rising_edge_start_1 = micros();
-  }
-  else if(trigger == 0) {
-    channel_1_raw = micros() - rising_edge_start_1;
-  }
-}
-
-void getCh2() {
-  int trigger = digitalRead(ch2Pin);
-  if(trigger == 1) {
-    rising_edge_start_2 = micros();
-  }
-  else if(trigger == 0) {
-    channel_2_raw = micros() - rising_edge_start_2;
-  }
-}
-
-void getCh3() {
-  int trigger = digitalRead(ch3Pin);
-  if(trigger == 1) {
-    rising_edge_start_3 = micros();
-  }
-  else if(trigger == 0) {
-    channel_3_raw = micros() - rising_edge_start_3;
-  }
-}
-
-void getCh4() {
-  int trigger = digitalRead(ch4Pin);
-  if(trigger == 1) {
-    rising_edge_start_4 = micros();
-  }
-  else if(trigger == 0) {
-    channel_4_raw = micros() - rising_edge_start_4;
-  }
-}
-
-void getCh5() {
-  int trigger = digitalRead(ch5Pin);
-  if(trigger == 1) {
-    rising_edge_start_5 = micros();
-  }
-  else if(trigger == 0) {
-    channel_5_raw = micros() - rising_edge_start_5;
-  }
-}
-
-void getCh6() {
-  int trigger = digitalRead(ch6Pin);
-  if(trigger == 1) {
-    rising_edge_start_6 = micros();
-  }
-  else if(trigger == 0) {
-    channel_6_raw = micros() - rising_edge_start_6;
-  }
-}
